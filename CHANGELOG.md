@@ -1,5 +1,29 @@
 Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangelog.com/en/1.0.0/) from version 0.9 onwards.
 
+## 0.13 (unreleased)
+
+### Breaking
+- :boom: **Breaking** Refactored from Max/Min to High/Low
+
+### Fixed
+
+### Changed
+
+### Added
+- :tada: **Enhancement** Implemented Value at Risk Analysis Criterion
+- :tada: **Enhancement** Implemented Expected Shortfall Analysis Criterion
+- :tada: **Enhancement** Implemented Returns class to analyze the time series of return rates. Supports logarithmic and arithmetic returns
+- :tada: **Enhancement** Implemented a way to find the best result for multiple strategies by submitting a range of numbers while backtesting
+- :tada: **Enhancement** Implemented NumberOfBreakEvenTradesCriterion for counting break even trades 
+- :tada: **Enhancement** Implemented NumberOfLosingTradesCriterion for counting losing trades
+- :tada: **Enhancement** Implemented NumberOfWinningTradesCriterion for counting winning trades 
+- :tada: **Enhancement** Implemented NumberOfWinningTradesCriterion for counting winning trades 
+- :tada: **Enhancement** Implemented ProfitLossPercentageCriterion for calculating the total performance percentage of your trades 
+- :tada: **Enhancement** Implemented TotalProfit2Criterion for calculating the total profit of your trades 
+- :tada: **Enhancement** Implemented TotalLossCriterion for calculating the total loss of your trades  
+
+### Removed/Deprecated
+
 ## 0.12 (released September 10, 2018)
 
 ### Breaking: 

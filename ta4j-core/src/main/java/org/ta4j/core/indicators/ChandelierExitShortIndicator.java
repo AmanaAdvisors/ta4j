@@ -24,8 +24,8 @@
 package org.ta4j.core.indicators;
 
 import org.ta4j.core.TimeSeries;
+import org.ta4j.core.indicators.helpers.LowPriceIndicator;
 import org.ta4j.core.indicators.helpers.LowestValueIndicator;
-import org.ta4j.core.indicators.helpers.MinPriceIndicator;
 import org.ta4j.core.num.Num;
 
 /**
@@ -36,9 +36,7 @@ import org.ta4j.core.num.Num;
 public class ChandelierExitShortIndicator extends CachedIndicator<Num> {
 
     private final LowestValueIndicator low;
-    
     private final ATRIndicator atr;
-    
     private final Num k;
 
     /**
@@ -57,7 +55,7 @@ public class ChandelierExitShortIndicator extends CachedIndicator<Num> {
      */
     public ChandelierExitShortIndicator(TimeSeries series, int barCount, double k) {
         super(series);
-        low = new LowestValueIndicator(new MinPriceIndicator(series), barCount);
+        low = new LowestValueIndicator(new LowPriceIndicator(series), barCount);
         atr = new ATRIndicator(series, barCount);
         this.k = numOf(k);
     }
