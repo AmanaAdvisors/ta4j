@@ -12,28 +12,17 @@ public class LinearBorrowingCostModel implements CostModel {
     private double feePerPeriod;
 
     /**
-     * Intercept of the linear model - initial fee
-     */
-    private double initialFee;
-
-    /**
      * Constructor.
      * (feePerPeriod * nPeriod)
      * @param feePerPeriod the coefficient (e.g. 0.0001 for 1bp per period)
      */
     public LinearBorrowingCostModel(double feePerPeriod) {
-        this(feePerPeriod, 0);
+        this.feePerPeriod = feePerPeriod;
     }
 
-    /**
-     * Constructor.
-     * (feePerPeriod * nPeriod + initialFee)
-     * @param feePerPeriod the coefficient (e.g. 0.0001 for 1bp per period)
-     * @param initialFee the constant (e.g. 0.2 for $0.2 per {@link Order order})
-     */
-    public LinearBorrowingCostModel(double feePerPeriod, double initialFee) {
-        this.feePerPeriod = feePerPeriod;
-        this.initialFee = initialFee;
+    // TODO: ensure, raise Exception
+    public Num calculate(Num price, Num amount) {
+        return price.numOf(0);
     }
 
     /**
@@ -43,14 +32,10 @@ public class LinearBorrowingCostModel implements CostModel {
      * @param finalPrice price of the final bar to be considered (for open trades)
      * @return the absolute order cost
      */
-    public Num calculate(Trade trade, int finalIndex, Num finalPrice) {
-        return getHoldingCost(trade, finalIndex);
-    }
-
-    private Num getHoldingCost(Trade trade, int currentIndex) {
+    public Num calculate(Trade trade, int currentIndex) {
         Order entryOrder = trade.getEntry();
         Order exitOrder = trade.getExit();
-        Num borrowingCost = trade.getEntry().getAmount().numOf(0);
+        Num borrowingCost = trade.getEntry().getPrice().numOf(0);
 
         if (entryOrder != null && entryOrder.getType().equals(Order.OrderType.SELL) && entryOrder.getAmount() != null) {
             int tradingPeriods = 0;
@@ -70,9 +55,8 @@ public class LinearBorrowingCostModel implements CostModel {
      * @return the absolute order cost
      */
     private Num getHoldingCostForPeriods(int tradingPeriods, Num tradedValue) {
-        return tradedValue.numOf(initialFee)
-                .plus(tradedValue
-                        .multipliedBy(tradedValue.numOf(tradingPeriods)
-                                .multipliedBy(tradedValue.numOf(feePerPeriod))));
+        return tradedValue
+                .multipliedBy(tradedValue.numOf(tradingPeriods)
+                        .multipliedBy(tradedValue.numOf(feePerPeriod)));
     }
 }

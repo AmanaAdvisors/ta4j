@@ -166,13 +166,13 @@ public class Trade implements Serializable {
     public Order operate(int index, Num price, Num amount) {
         Order order = null;
         if (isNew()) {
-            order = new Order(index, startingType, price, amount);
+            order = new Order(index, startingType, price, amount, transactionCostModel);
             entry = order;
         } else if (isOpened()) {
             if (index < entry.getIndex()) {
                 throw new IllegalStateException("The index i is less than the entryOrder index");
             }
-            order = new Order(index, startingType.complementType(), price, amount);
+            order = new Order(index, startingType.complementType(), price, amount, transactionCostModel);
             exit = order;
         }
         return order;
@@ -249,8 +249,26 @@ public class Trade implements Serializable {
      * @return the cost of the trade
      */
     public Num calculateCost(int finalIndex, Num finalPrice) {
-        Num transactionCost = transactionCostModel.calculate(this, finalIndex, finalPrice);
-        Num borrowingCost = holdingCostModel.calculate(this, finalIndex, finalPrice);
+        Num transactionCost = transactionCostModel.calculate(this, finalIndex);
+        Num borrowingCost = holdingCostModel.calculate(this, finalIndex);
         return transactionCost.plus(borrowingCost);
+    }
+
+    public Num getNetEntryPrice() {
+        return entry.getNetPrice();
+    }
+
+    public Num getNetExitPrice() {
+        return exit.getNetPrice();
+    }
+
+    public Num getHoldingCost() {
+        // TODO: raise exception
+        assert isClosed();
+        return getHoldingCost(exit.getIndex());
+    }
+
+    public Num getHoldingCost(int finalIndex) {
+        return holdingCostModel.calculate(this, finalIndex);
     }
 }
