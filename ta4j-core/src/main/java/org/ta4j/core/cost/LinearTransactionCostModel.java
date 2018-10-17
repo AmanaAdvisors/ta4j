@@ -20,32 +20,9 @@ public class LinearTransactionCostModel implements CostModel {
         this.feePerTrade = feePerTrade;
     }
 
-
-//    /**
-//     * Calculates the transaction cost of a trade.
-//     * @param trade the trade
-//     * @param currentIndex current bar index (for open trades)
-//     * @param currentPrice price of the current bar (for open trades)
-//     * @return the absolute order cost
-//     */
-//    public Num calculate(Trade trade, int currentIndex, Num currentPrice) {
-//        Num totalTradeCost = currentPrice.numOf(0);
-//        Order entryOrder = trade.getEntry();
-//        if (entryOrder != null) {
-//            // transaction costs of entry order
-//            totalTradeCost = getOrderCost(entryOrder.getValue());
-//            if (trade.getExit() != null) {
-//                // effective amount of entry order is adjusted for transaction costs
-//                // amt_real = amt_ordered * (1 - p_exit/p_entry * fee)
-//                Num exitPrice = trade.getExit().getPrice();
-//                Num newTradedAmount = entryOrder.getAmount().minus(totalTradeCost.dividedBy(exitPrice));
-//                Num newTradedValue = newTradedAmount.multipliedBy(exitPrice);
-//                // add transaction costs of exit order
-//                totalTradeCost = totalTradeCost.plus(getOrderCost(newTradedValue));
-//            }
-//        }
-//        return totalTradeCost;
-//    }
+    public Num calculate(Trade trade) {
+        return calculate(trade, 0);
+    }
 
     /**
      * Calculates the transaction cost of a trade.
@@ -54,13 +31,13 @@ public class LinearTransactionCostModel implements CostModel {
      * @return the absolute order cost
      */
     public Num calculate(Trade trade, int currentIndex) {
-        Num totalTradeCost = trade.getEntry().getPrice().numOf(0);
+        Num totalTradeCost = trade.getEntry().getNetPrice().numOf(0);
         Order entryOrder = trade.getEntry();
         if (entryOrder != null) {
             // transaction costs of entry order
             totalTradeCost = entryOrder.getCost();
             if (trade.getExit() != null) {
-                totalTradeCost = trade.getExit().getCost();
+                totalTradeCost = totalTradeCost.plus(trade.getExit().getCost());
             }
         }
         return totalTradeCost;
@@ -69,9 +46,21 @@ public class LinearTransactionCostModel implements CostModel {
     /**
      * @param price execution price
      * @param amount order amount
-     * @return the absolute order cost
+     * @return the absolute order transaction cost
      */
     public Num calculate(Num price, Num amount) {
         return amount.numOf(feePerTrade).multipliedBy(price).multipliedBy(amount);
+    }
+
+    /**
+     * Evaluate if two models are equal
+     * @param otherModel model to compare with
+     */
+    public boolean equals(CostModel otherModel) {
+        boolean equality = false;
+        if (this.getClass().equals(otherModel.getClass())) {
+            equality = ((LinearTransactionCostModel) otherModel).feePerTrade == this.feePerTrade;
+        }
+        return equality;
     }
 }

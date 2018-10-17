@@ -60,10 +60,10 @@ public class ProfitLossCriterion extends AbstractAnalysisCriterion {
      * @return the profit or loss of the trade
      */
     private Num calculateProfitLoss(TimeSeries series, Trade trade) {
-        Num exitClosePrice = trade.getExit().getPrice().isNaN() ?
-                series.getBar(trade.getExit().getIndex()).getClosePrice() : trade.getExit().getPrice();
-        Num entryClosePrice = trade.getEntry().getPrice().isNaN() ?
-                series.getBar(trade.getEntry().getIndex()).getClosePrice() : trade.getEntry().getPrice();
+        Num exitClosePrice = trade.getExit().getNetPrice().isNaN() ?
+                series.getBar(trade.getExit().getIndex()).getClosePrice() : trade.getExit().getNetPrice();
+        Num entryClosePrice = trade.getEntry().getNetPrice().isNaN() ?
+                series.getBar(trade.getEntry().getIndex()).getClosePrice() : trade.getEntry().getNetPrice();
 
         return exitClosePrice.minus(entryClosePrice).multipliedBy(trade.getExit().getAmount());
     }

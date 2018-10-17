@@ -20,23 +20,28 @@ public class LinearBorrowingCostModel implements CostModel {
         this.feePerPeriod = feePerPeriod;
     }
 
-    // TODO: ensure, raise Exception
     public Num calculate(Num price, Num amount) {
+        // borrowing costs depend on borrowed period
         return price.numOf(0);
+    }
+
+    public Num calculate(Trade trade) {
+        if (trade.isOpened()) { throw new IllegalArgumentException("Trade is not closed. Final index of observation needs to be provided."); }
+        return calculate(trade, trade.getExit().getIndex());
     }
 
     /**
      * Calculates the borrowing cost of a trade.
      * @param trade the trade
-     * @param finalIndex final bar index to be considered (for open trades)
-     * @param finalPrice price of the final bar to be considered (for open trades)
+     * @param currentIndex final bar index to be considered (for open trades)
      * @return the absolute order cost
      */
     public Num calculate(Trade trade, int currentIndex) {
         Order entryOrder = trade.getEntry();
         Order exitOrder = trade.getExit();
-        Num borrowingCost = trade.getEntry().getPrice().numOf(0);
+        Num borrowingCost = trade.getEntry().getNetPrice().numOf(0);
 
+        // borrowing costs apply for short positions only
         if (entryOrder != null && entryOrder.getType().equals(Order.OrderType.SELL) && entryOrder.getAmount() != null) {
             int tradingPeriods = 0;
             if (trade.isClosed()) {
@@ -50,13 +55,25 @@ public class LinearBorrowingCostModel implements CostModel {
     }
 
     /**
-     * @param tradingPeriods a trade order
-     * @param tradedValue the traded value of the order
-     * @return the absolute order cost
+     * @param tradingPeriods number of periods
+     * @param tradedValue value of the trade initial trade position
+     * @return the absolute borrowing cost
      */
     private Num getHoldingCostForPeriods(int tradingPeriods, Num tradedValue) {
         return tradedValue
                 .multipliedBy(tradedValue.numOf(tradingPeriods)
                         .multipliedBy(tradedValue.numOf(feePerPeriod)));
+    }
+
+    /**
+     * Evaluate if two models are equal
+     * @param otherModel model to compare with
+     */
+    public boolean equals(CostModel otherModel) {
+        boolean equality = false;
+        if (this.getClass().equals(otherModel.getClass())) {
+            equality = ((LinearBorrowingCostModel) otherModel).feePerPeriod == this.feePerPeriod;
+        }
+        return equality;
     }
 }
