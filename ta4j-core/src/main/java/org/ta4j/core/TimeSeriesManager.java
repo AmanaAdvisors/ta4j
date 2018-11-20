@@ -52,6 +52,14 @@ public class TimeSeriesManager {
      * Constructor.
      * @param timeSeries the time series to be managed
      */
+    public TimeSeriesManager() {
+        this(null, new ZeroCostModel(), new ZeroCostModel());
+    }
+
+    /**
+     * Constructor.
+     * @param timeSeries the time series to be managed
+     */
     public TimeSeriesManager(TimeSeries timeSeries) {
     	this(timeSeries, new ZeroCostModel(), new ZeroCostModel());
     }

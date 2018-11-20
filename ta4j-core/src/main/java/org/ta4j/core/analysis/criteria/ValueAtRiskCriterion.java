@@ -36,7 +36,7 @@ public class ValueAtRiskCriterion extends AbstractAnalysisCriterion {
 
     @Override
     public Num calculate(TimeSeries series, Trade trade) {
-        if (trade != null && trade.getEntry() != null && trade.getExit() != null) {
+        if (trade != null && trade.isClosed()) {
             Returns returns = new Returns(series, trade, Returns.ReturnType.LOG);
             return calculateVaR(returns, confidence);
         }
@@ -71,6 +71,7 @@ public class ValueAtRiskCriterion extends AbstractAnalysisCriterion {
 
     @Override
     public boolean betterThan(Num criterionValue1, Num criterionValue2) {
+        // because it represents a loss, VaR is non-positive
         return criterionValue1.isGreaterThan(criterionValue2);
     }
 }

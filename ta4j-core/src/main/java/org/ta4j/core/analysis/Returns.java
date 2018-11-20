@@ -27,7 +27,6 @@ import org.ta4j.core.Indicator;
 import org.ta4j.core.TimeSeries;
 import org.ta4j.core.Trade;
 import org.ta4j.core.TradingRecord;
-import org.ta4j.core.num.DoubleNum;
 import org.ta4j.core.num.NaN;
 import org.ta4j.core.num.Num;
 
@@ -45,23 +44,23 @@ public class Returns implements Indicator<Num> {
     public enum ReturnType {
         LOG {
             @Override
-            public Num calculate(Num x_new, Num x_old) {
+            public Num calculate(Num xNew, Num xOld) {
                 // r_i = ln(P_i/P_(i-1))
-                return x_new.numOf(DoubleNum.valueOf(x_new.dividedBy(x_old).doubleValue()).log().doubleValue());
+                return (xNew.dividedBy(xOld)).log();
             }
         },
         ARITHMETIC {
             @Override
-            public Num calculate(Num x_new, Num x_old) {
+            public Num calculate(Num xNew, Num xOld) {
                 // r_i = P_i/P_(i-1) - 1
-                return x_new.dividedBy(x_old).minus(one);
+                return xNew.dividedBy(xOld).minus(one);
             }
         };
 
         /**
          * @return calculate a single return rate
          */
-        public abstract Num calculate(Num x_new, Num x_old);
+        public abstract Num calculate(Num xNew, Num xOld);
     }
 
     private final ReturnType type;
@@ -74,6 +73,7 @@ public class Returns implements Indicator<Num> {
 
     /** Unit element for efficient arithmetic return computation */
     private static Num one;
+    private static Num minusOne;
 
 
     /**
@@ -83,6 +83,7 @@ public class Returns implements Indicator<Num> {
      */
     public Returns(TimeSeries timeSeries, Trade trade, ReturnType type) {
         one = timeSeries.numOf(1);
+        minusOne = timeSeries.numOf(-1);
         this.timeSeries = timeSeries;
         this.type = type;
         // at index 0, there is no return
@@ -99,6 +100,7 @@ public class Returns implements Indicator<Num> {
      */
     public Returns(TimeSeries timeSeries, TradingRecord tradingRecord, ReturnType type) {
         one = timeSeries.numOf(1);
+        minusOne = timeSeries.numOf(-1);
         this.timeSeries = timeSeries;
         this.type = type;
         // at index 0, there is no return
@@ -136,75 +138,9 @@ public class Returns implements Indicator<Num> {
         return timeSeries.getBarCount() - 1;
     }
 
-//    /**
-//     * Calculates the return time-series during a single trade.
-//     * @param trade a single trade
-//     */
-//    private void calculate(Trade trade) {
-//        final int entryIndex = trade.getEntry().getIndex();
-//        Num minusOne = timeSeries.numOf(-1);
-//        int begin = entryIndex + 1;
-//        if (begin > values.size()) {
-//            // fill returns since last trade with zeroes
-//            values.addAll(Collections.nCopies(begin - values.size(), timeSeries.numOf(0)));
-//        }
-//        // TODO: currentIndex??
-//        int end = determineEndIndex(trade, finalIndex);
-//        int nPeriods = end - entryIndex;
-//        Num totalCost = trade.calculateCost(end, timeSeries.getBar(end).getClosePrice());
-//        Num avgCost = totalCost.dividedBy(totalCost.numOf(nPeriods));
-//
-//        for (int i = Math.max(begin, 1); i <= end; i++) {
-//            // TODO; outsource cost per period to trade
-//            Num adjustedNewPrice = timeSeries.getBar(i).getClosePrice().minus(avgCost);
-//            Num assetReturn = type.calculate(adjustedNewPrice, timeSeries.getBar(i-1).getClosePrice());
-//            Num strategyReturn;
-//            if (trade.getEntry().isBuy()) {
-//                strategyReturn = assetReturn;
-//            } else {
-//                strategyReturn = assetReturn.multipliedBy(minusOne);
-//            }
-//            values.add(strategyReturn);
-//        }
-//    }
-
-//    /**
-//     * Calculates the return time-series during a single trade.
-//     * @param trade a single trade
-//     */
-//    private void calculate(Trade trade) {
-//        final int entryIndex = trade.getEntry().getIndex();
-//        Num minusOne = timeSeries.numOf(-1);
-//        int begin = entryIndex + 1;
-//        if (begin > values.size()) {
-//            // fill returns since last trade with zeroes
-//            values.addAll(Collections.nCopies(begin - values.size(), timeSeries.numOf(0)));
-//        }
-//
-//        int end = (trade.getExit() != null) ? Math.min(trade.getExit().getIndex(), timeSeries.getEndIndex()) : timeSeries.getEndIndex();
-//        int nPeriods = end - entryIndex;
-//        Num totalCost = trade.calculateCost(end, timeSeries.getBar(end).getClosePrice());
-//        Num avgCost = totalCost.dividedBy(totalCost.numOf(nPeriods));
-//
-//        // spread trading costs equally over trade
-//        for (int i = Math.max(begin, 1); i <= end; i++) {
-//            // TODO; outsource cost per period to trade
-//            Num adjustedNewPrice = timeSeries.getBar(i).getClosePrice().minus(avgCost);
-//            Num assetReturn = type.calculate(adjustedNewPrice, timeSeries.getBar(i-1).getClosePrice());
-//            Num strategyReturn;
-//            if (trade.getEntry().isBuy()) {
-//                strategyReturn = assetReturn;
-//            } else {
-//                strategyReturn = assetReturn.multipliedBy(minusOne);
-//            }
-//            values.add(strategyReturn);
-//        }
-//    }
-
     public void calculate(Trade trade) {
         calculate(trade, timeSeries.getEndIndex());
     }
-
 
     /**
      * Calculates the cash flow for a single trade (including accrued cashflow for open trades).
@@ -213,8 +149,7 @@ public class Returns implements Indicator<Num> {
      */
     public void calculate(Trade trade, int finalIndex) {
         boolean isLongTrade = trade.getEntry().isBuy();
-        Num minusOne = timeSeries.numOf(-1);
-        int endIndex = determineEndIndex(trade, finalIndex);
+        int endIndex = CashFlow.determineEndIndex(trade, finalIndex, timeSeries.getEndIndex());
         final int entryIndex = trade.getEntry().getIndex();
         int begin = entryIndex + 1;
         if (begin > values.size()) {
@@ -222,23 +157,27 @@ public class Returns implements Indicator<Num> {
         }
 
         int startingIndex = Math.max(begin, 1);
-
         int nPeriods = endIndex - entryIndex;
         Num holdingCost = trade.getHoldingCost(endIndex);
         Num avgCost = holdingCost.dividedBy(holdingCost.numOf(nPeriods));
 
-        // returns are iterative. Need to keep track of the base price
+        // returns are per period (iterative). Base price needs to be updated accordingly
         Num lastPrice = trade.getEntry().getNetPrice();
+        Num previousReturnFactor = one;
         for (int i = startingIndex; i < endIndex; i++) {
-            Num intermediateNetPrice = addCost(timeSeries.getBar(i).getClosePrice(), avgCost, isLongTrade);
-            Num assetReturn = type.calculate(intermediateNetPrice, lastPrice);
+            Num intermediateNetPrice = CashFlow.addCost(timeSeries.getBar(i).getClosePrice(), avgCost, isLongTrade);
 
             Num strategyReturn;
             if (trade.getEntry().isBuy()) {
-                strategyReturn = assetReturn;
+                strategyReturn = type.calculate(intermediateNetPrice, lastPrice);
             } else {
-                // TODO: this ignores the leverage I think
-                strategyReturn = assetReturn.multipliedBy(minusOne);
+                // include leverage ratio
+                Num tradeReturnFactor = updateReturnFactor(trade.getEntry().getNetPrice(), intermediateNetPrice);
+                strategyReturn = calculateLeveragedReturn(intermediateNetPrice, lastPrice, tradeReturnFactor,
+                        previousReturnFactor);
+
+                // update return factor
+                previousReturnFactor = tradeReturnFactor;
             }
             values.add(strategyReturn);
             // update base price
@@ -255,15 +194,61 @@ public class Returns implements Indicator<Num> {
         }
 
         Num strategyReturn;
-        Num assetReturn = type.calculate(addCost(exitPrice, avgCost, isLongTrade), lastPrice);
+        Num netExitPrice = CashFlow.addCost(exitPrice, avgCost, isLongTrade);
         if (trade.getEntry().isBuy()) {
-            strategyReturn = assetReturn;
+            strategyReturn = type.calculate(netExitPrice, lastPrice);
         } else {
-            // TODO: this ignores the leverage I think
-            strategyReturn = assetReturn.multipliedBy(minusOne);
+            // include leverage ratio
+            Num tradeReturnFactor = updateReturnFactor(trade.getEntry().getNetPrice(), netExitPrice);
+            strategyReturn = calculateLeveragedReturn(netExitPrice, lastPrice, tradeReturnFactor, previousReturnFactor);
         }
-
         values.add(strategyReturn);
+    }
+
+    /**
+     * Calculates the current return factor since the trade entry.
+     * @param entryPrice Price of trade entry
+     * @param currentPrice Current price of the asset
+     * @return current return factor
+     */
+    private Num updateReturnFactor(Num entryPrice, Num currentPrice) {
+        // Return factor needed for the leverage ratio computation
+        Num currentTradeReturnFactor = null;
+        switch (type) {
+            case LOG:
+                // Logarithmic returns are additive. No adjustment necessary
+                break;
+            case ARITHMETIC:
+                currentTradeReturnFactor = one.minus(type.calculate(currentPrice, entryPrice));
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+        return currentTradeReturnFactor;
+    }
+
+    /**
+     * Calculates the return including leverage effects (at time t)
+     * @param currentPrice price at time t
+     * @param lastPrice price at time t-1
+     * @param currentReturnFactor return factor at time t
+     * @param previousReturnFactor  return factor at time t-1
+     * @return leveraged return
+     */
+    private Num calculateLeveragedReturn(Num currentPrice, Num lastPrice, Num currentReturnFactor, Num previousReturnFactor) {
+        Num leveragedReturn;
+        switch (type) {
+            case LOG:
+                // log returns are additive, leverage ratio is constant
+                leveragedReturn = type.calculate(currentPrice, lastPrice).multipliedBy(minusOne);
+                break;
+            case ARITHMETIC:
+                leveragedReturn = type.calculate(currentReturnFactor, previousReturnFactor);
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+        return leveragedReturn;
     }
 
     /**
@@ -271,10 +256,8 @@ public class Returns implements Indicator<Num> {
      * @param tradingRecord the trading record
      */
     private void calculate(TradingRecord tradingRecord) {
-        for (Trade trade : tradingRecord.getTrades()) {
-            // For each trade...
-            calculate(trade);
-        }
+        // For each trade...
+        tradingRecord.getTrades().forEach(this::calculate);
     }
 
     /**
@@ -284,28 +267,5 @@ public class Returns implements Indicator<Num> {
         if (timeSeries.getEndIndex() >= values.size()) {
             values.addAll(Collections.nCopies(timeSeries.getEndIndex() - values.size() + 1, timeSeries.numOf(0)));
         }
-    }
-
-    private static Num addCost(Num rawPrice, Num holdingCost, boolean isLongTrade) {
-        Num netPrice;
-        if (isLongTrade) {
-            netPrice = rawPrice.minus(holdingCost);
-        } else {
-            netPrice = rawPrice.plus(holdingCost);
-        }
-        return netPrice;
-    }
-
-    private int determineEndIndex(Trade trade, int finalIndex) {
-        int idx = finalIndex;
-        // After closing of trade, no further accrual necessary
-        if (trade.getExit() != null) {
-            idx = Math.min(trade.getExit().getIndex(), finalIndex);
-        }
-        // Accrual at most until the end of asset data
-        if (idx > timeSeries.getEndIndex()) {
-            idx = timeSeries.getEndIndex();
-        }
-        return idx;
     }
 }

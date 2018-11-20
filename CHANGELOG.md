@@ -6,10 +6,15 @@ Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangel
 - :boom: **Breaking** Refactored from Max/Min to High/Low
 
 ### Fixed
+- **Fixed `java.lang.ClassCastException` in**: `PrecisionNum.equals()`.
+- **Fixed `java.lang.ClassCastException` in**: `DoubleNum.equals()`.
+- **Fixed `java.lang.NullPointerException` in**: `NumberOfBarsCriterion.calculate(TimeSeries, Trade)` for opened trade.
+- **Fixed `java.lang.NullPointerException` in**: `AverageProfitableTradesCriterion.calculate(TimeSeries, Trade)` for opened trade.
 
 ### Changed
 
 ### Added
+- :tada: **Enhancement** Implemented trading cost models (linear transaction and borrowing cost models)
 - :tada: **Enhancement** Implemented Value at Risk Analysis Criterion
 - :tada: **Enhancement** Implemented Expected Shortfall Analysis Criterion
 - :tada: **Enhancement** Implemented Returns class to analyze the time series of return rates. Supports logarithmic and arithmetic returns
@@ -20,7 +25,10 @@ Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangel
 - :tada: **Enhancement** Implemented NumberOfWinningTradesCriterion for counting winning trades 
 - :tada: **Enhancement** Implemented ProfitLossPercentageCriterion for calculating the total performance percentage of your trades 
 - :tada: **Enhancement** Implemented TotalProfit2Criterion for calculating the total profit of your trades 
-- :tada: **Enhancement** Implemented TotalLossCriterion for calculating the total loss of your trades  
+- :tada: **Enhancement** Implemented TotalLossCriterion for calculating the total loss of your trades
+- :tada: **Enhancement** Added ADX indicator based strategy to ta4j-examples  
+- :tada: **Enhancement** TrailingStopLossRule: added possibility of calculations of TrailingStopLossRule also for open, high, low price. Added getter 
+for currentStopLossLimitActivation
 
 ### Removed/Deprecated
 
