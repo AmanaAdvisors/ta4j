@@ -177,17 +177,6 @@ public class CashFlow implements Indicator<Num> {
         return ratio;
     }
 
-    private static Num getIntermediateRatio(boolean isLongTrade, Num entryPrice, Num exitPrice) {
-        Num ratio;
-        if (isLongTrade) {
-            ratio = exitPrice.dividedBy(entryPrice);
-        }
-        else {
-            ratio = entryPrice.numOf(2).minus(exitPrice.dividedBy(entryPrice));
-        }
-        return ratio;
-    }
-
     /**
      * Calculates the cash flow for the closed trades of a trading record.
      * @param tradingRecord the trading record
