@@ -69,6 +69,7 @@ public class BaseTradingRecord implements TradingRecord {
      */
     private List<Trade> trades = new ArrayList<>();
 
+
     /**
      * The entry type (BUY or SELL) in the trading session
      */
@@ -154,6 +155,7 @@ public class BaseTradingRecord implements TradingRecord {
         return currentTrade;
     }
 
+
     @Override
     public void operate(int index, Num price, Num amount) {
         if (currentTrade.isClosed()) {
@@ -186,6 +188,11 @@ public class BaseTradingRecord implements TradingRecord {
     @Override
     public List<Trade> getTrades() {
         return trades;
+    }
+
+    @Override
+    public Order.OrderType getStartingType() {
+        return startingType;
     }
 
     public List<Order> getOrders() { return orders; }

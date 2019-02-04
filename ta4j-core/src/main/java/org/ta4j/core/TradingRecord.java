@@ -119,7 +119,12 @@ public interface TradingRecord extends Serializable {
     default int getTradeCount() {
         return getTrades().size();
     }
-    
+
+    /**
+     * @return the starting entry type
+     */
+    Order.OrderType getStartingType();
+
     /**
      * @return the last trade recorded
      */
